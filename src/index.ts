@@ -22,17 +22,16 @@ const { activate, deactivate } = defineExtension(() => {
 
     isRunning = true
     channel.clear()
-    channel.show(true)
     channel.appendLine(`[1focus] Running "f commitPush" in ${workspacePath}`)
 
     try {
       await runCommitPush(workspacePath, channel)
       channel.appendLine('[1focus] Command completed successfully.')
-      window.showInformationMessage('1focus: repository committed and pushed.')
     }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       channel.appendLine(`[1focus] Command failed: ${message}`)
+      channel.show(true)
       window.showErrorMessage('1focus: f commitPush failed. Check the 1focus output channel for details.')
     }
     finally {

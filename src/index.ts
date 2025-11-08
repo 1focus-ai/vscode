@@ -14,8 +14,8 @@ const { activate, deactivate } = defineExtension(() => {
       return
     }
 
-    const workspaceFolder = workspace.workspaceFolders?.[0]
-    if (!workspaceFolder) {
+    const workspacePath = getTargetWorkspacePath()
+    if (!workspacePath) {
       window.showErrorMessage('1focus: open a workspace before running commit & push.')
       return
     }
@@ -23,10 +23,10 @@ const { activate, deactivate } = defineExtension(() => {
     isRunning = true
     channel.clear()
     channel.show(true)
-    channel.appendLine(`[1focus] Running "f commitPush" in ${workspaceFolder.uri.fsPath}`)
+    channel.appendLine(`[1focus] Running "f commitPush" in ${workspacePath}`)
 
     try {
-      await runCommitPush(workspaceFolder.uri.fsPath, channel)
+      await runCommitPush(workspacePath, channel)
       channel.appendLine('[1focus] Command completed successfully.')
       window.showInformationMessage('1focus: repository committed and pushed.')
     }
@@ -50,8 +50,9 @@ export { activate, deactivate }
 
 function runCommitPush(cwd: string, channel: OutputChannel) {
   return new Promise<void>((resolve, reject) => {
-    const shell = process.env.SHELL ?? '/bin/bash'
-    const child = spawn(shell, ['-lc', 'f commitPush'], {
+    channel.appendLine('[1focus] > f commitPush')
+
+    const child = spawn('f', ['commitPush'], {
       cwd,
       env: process.env,
     })
@@ -67,4 +68,15 @@ function runCommitPush(cwd: string, channel: OutputChannel) {
       reject(new Error(`Exited with code ${code ?? 'unknown'}`))
     })
   })
+}
+
+function getTargetWorkspacePath() {
+  const activeDocument = window.activeTextEditor?.document
+  if (activeDocument) {
+    const folder = workspace.getWorkspaceFolder(activeDocument.uri)
+    if (folder)
+      return folder.uri.fsPath
+  }
+
+  return workspace.workspaceFolders?.[0]?.uri.fsPath
 }

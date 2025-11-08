@@ -12,27 +12,33 @@ tasks:
       - task --list
 
   setup:
-    desc: Ensure Go is installed and download Flow CLI dependencies.
+    desc: Verify Node, pnpm, and the f CLI are installed, then bootstrap the repo.
     silent: true
     cmds:
       - |
           set -euo pipefail
-          if ! command -v go >/dev/null 2>&1; then
-            echo "Go toolchain 'go' not found in PATH."
-            echo "Install it from https://go.dev/doc/install"
+
+          if ! command -v node >/dev/null 2>&1; then
+            echo "Node.js not found in PATH. Install it from https://nodejs.org (LTS 18+ recommended)."
             exit 1
           fi
-          go version >/dev/null
-          repo_root="$PWD"
-          pushd cli/flow >/dev/null
-          export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
-          export GOMODCACHE="${GOMODCACHE:-$repo_root/.gomodcache}"
-          mkdir -p "$GOCACHE"
-          mkdir -p "$GOMODCACHE"
-          if ! go mod download >/dev/null; then
-            echo "Warning: unable to download Go modules; try again once network access is available."
+
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found in PATH. Enable it via \`corepack enable pnpm\` or install from https://pnpm.io/installation."
+            exit 1
           fi
-          popd >/dev/null
+
+          if ! command -v f >/dev/null 2>&1; then
+            echo "Required CLI 'f' not found in PATH. Install it from https://github.com/1focus-ai/f."
+            exit 1
+          fi
+
+          echo "Installing JS dependencies with pnpm..."
+          pnpm install
+
+          echo "Building the extension once to verify the toolchain..."
+          pnpm build
+
           echo "✔️ you are setup"
 
   flow:

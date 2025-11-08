@@ -11,6 +11,10 @@ The setup task verifies that `node`, `pnpm`, and the [`f` CLI](https://github.co
 
 Run `task` to see all possible commands.
 
+## Install in Cursor
+
+Run `task deploy`. This should install the extension in Cursor (works on my machine).
+
 ## Notes
 
 Started of [this template](https://github.com/jinghaihan/starter-vscode).

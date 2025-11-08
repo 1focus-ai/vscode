@@ -31,8 +31,10 @@ const { activate, deactivate } = defineExtension(() => {
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       channel.appendLine(`[1focus] Command failed: ${message}`)
-      channel.show(true)
-      window.showErrorMessage('1focus: f commitPush failed. Check the 1focus output channel for details.')
+      const openLog = 'Show log'
+      const choice = await window.showErrorMessage('1focus: f commitPush failed.', openLog)
+      if (choice === openLog)
+        channel.show(true)
     }
     finally {
       isRunning = false

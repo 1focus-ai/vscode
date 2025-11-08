@@ -11,8 +11,6 @@ catalogs:
   lint:
     '@antfu/eslint-config': ^6.0.0
     eslint: ^9.38.0
-    lint-staged: ^16.2.5
-    simple-git-hooks: ^2.13.1
   test:
     vitest: ^3.2.4
   tsc:
@@ -24,6 +22,5 @@ catalogs:
     vscode-ext-gen: ^1.3.0
 onlyBuiltDependencies:
   - esbuild
-  - simple-git-hooks
   - '@vscode/vsce-sign'
   - keytar

@@ -71,6 +71,13 @@ tasks:
           task flow -- {{.CLI_ARGS}}
 
   deploy:
+    desc: Package the VS Code extension and install it into Cursor.
+    cmds:
+      - |
+          set -euo pipefail
+          pnpm package
+
+  deploy_cli:
     desc: Build the fgo CLI binary, install it to ~/bin as fgo, and optionally add ~/bin to PATH for your shell.
     silent: true
     cmds:
@@ -196,7 +203,7 @@ tasks:
       bin_name: "fm"
       alias_name: ""
     cmds:
-      - task: deploy
+      - task: deploy_cli
         vars:
           bin_name: "{{.bin_name}}"
           alias_name: "{{.alias_name}}"

@@ -1,7 +1,7 @@
 {
   "publisher": "nikivdev",
-  "name": "flow",
-  "displayName": "flow",
+  "name": "1focus",
+  "displayName": "1focus",
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.19.0",
@@ -31,10 +31,16 @@
     "vscode": "^1.90.0"
   },
   "activationEvents": [
-    "onStartupFinished"
+    "onCommand:1focus.commitPush"
   ],
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "1focus.commitPush",
+        "title": "1focus: Commit & Push",
+        "category": "1focus"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "vscode-ext-name",
@@ -44,14 +50,14 @@
   "scripts": {
     "dev": "pnpm build --watch --sourcemap",
     "build": "tsdown",
-    "package": "vsce package --no-dependencies",
+    "package": "vsce package --no-dependencies && node scripts/install-cursor.mjs",
     "deps": "taze major -I",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "release": "bumpp",
     "generate": "vscode-ext-gen --output src/generated/meta.ts",
-    "prepare": "simple-git-hooks && pnpm generate",
+    "prepare": "pnpm generate",
     "bootstrap": "pnpm install",
     "prepublishOnly": "pnpm build",
     "vscode:prepublish": "pnpm build"
@@ -63,21 +69,13 @@
     "@vscode/vsce": "catalog:cli",
     "bumpp": "catalog:cli",
     "eslint": "catalog:lint",
-    "lint-staged": "catalog:lint",
     "pncat": "catalog:cli",
     "reactive-vscode": "catalog:vscode",
-    "simple-git-hooks": "catalog:lint",
     "taze": "catalog:cli",
     "tsdown": "catalog:build",
     "typescript": "catalog:tsc",
     "vitest": "catalog:test",
     "vscode-ext-gen": "catalog:vscode",
     "vsxpub": "catalog:cli"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged"
-  },
-  "lint-staged": {
-    "*": "eslint --fix"
   }
 }

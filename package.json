@@ -1,0 +1,83 @@
+{
+  "publisher": "nikivdev",
+  "name": "flow",
+  "displayName": "flow",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.19.0",
+  "description": "",
+  "author": "nikivdev",
+  "license": "MIT",
+  "homepage": "https://github.com/jinghaihan/vscode-ext-name#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jinghaihan/vscode-ext-name.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jinghaihan/vscode-ext-name/issues"
+  },
+  "keywords": [],
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/index.js",
+  "icon": "res/icon.png",
+  "files": [
+    "LICENSE.md",
+    "dist/*",
+    "res/*"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [],
+    "configuration": {
+      "type": "object",
+      "title": "vscode-ext-name",
+      "properties": {}
+    }
+  },
+  "scripts": {
+    "dev": "pnpm build --watch --sourcemap",
+    "build": "tsdown",
+    "package": "vsce package --no-dependencies",
+    "deps": "taze major -I",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "release": "bumpp",
+    "generate": "vscode-ext-gen --output src/generated/meta.ts",
+    "prepare": "simple-git-hooks && pnpm generate",
+    "bootstrap": "pnpm install",
+    "prepublishOnly": "pnpm build",
+    "vscode:prepublish": "pnpm build"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:lint",
+    "@types/node": "catalog:types",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "catalog:cli",
+    "bumpp": "catalog:cli",
+    "eslint": "catalog:lint",
+    "lint-staged": "catalog:lint",
+    "pncat": "catalog:cli",
+    "reactive-vscode": "catalog:vscode",
+    "simple-git-hooks": "catalog:lint",
+    "taze": "catalog:cli",
+    "tsdown": "catalog:build",
+    "typescript": "catalog:tsc",
+    "vitest": "catalog:test",
+    "vscode-ext-gen": "catalog:vscode",
+    "vsxpub": "catalog:cli"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged"
+  },
+  "lint-staged": {
+    "*": "eslint --fix"
+  }
+}

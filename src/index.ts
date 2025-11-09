@@ -5,34 +5,34 @@ import type { OutputChannel } from 'vscode'
 import { displayName } from './generated/meta'
 
 const { activate, deactivate } = defineExtension(() => {
-  const channel = window.createOutputChannel(displayName ?? '1focus')
+  const channel = window.createOutputChannel(displayName ?? '1Focus')
   let isRunning = false
 
   const commitPush = commands.registerCommand('1focus.commitPush', async () => {
     if (isRunning) {
-      window.showWarningMessage('1focus: commit & push already running.')
+      window.showWarningMessage('1Focus: commit & push already running.')
       return
     }
 
     const workspacePath = getTargetWorkspacePath()
     if (!workspacePath) {
-      window.showErrorMessage('1focus: open a workspace before running commit & push.')
+      window.showErrorMessage('1Focus: open a workspace before running commit & push.')
       return
     }
 
     isRunning = true
     channel.clear()
-    channel.appendLine(`[1focus] Running "f commitPush" in ${workspacePath}`)
+    channel.appendLine(`[1Focus] Running "f commitPush" in ${workspacePath}`)
 
     try {
       await runCommitPush(workspacePath, channel)
-      channel.appendLine('[1focus] Command completed successfully.')
+      channel.appendLine('[1Focus] Command completed successfully.')
     }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      channel.appendLine(`[1focus] Command failed: ${message}`)
+      channel.appendLine(`[1Focus] Command failed: ${message}`)
       const openLog = 'Show log'
-      const choice = await window.showErrorMessage('1focus: f commitPush failed.', openLog)
+      const choice = await window.showErrorMessage('1Focus: f commitPush failed.', openLog)
       if (choice === openLog)
         channel.show(true)
     }
@@ -51,7 +51,7 @@ export { activate, deactivate }
 
 function runCommitPush(cwd: string, channel: OutputChannel) {
   return new Promise<void>((resolve, reject) => {
-    channel.appendLine('[1focus] > f commitPush')
+    channel.appendLine('[1Focus] > f commitPush')
 
     const child = spawn('f', ['commitPush'], {
       cwd,

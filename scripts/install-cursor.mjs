@@ -15,7 +15,7 @@ const repoRoot = path.resolve(__dirname, '..')
 
 async function main() {
   if (process.env.SKIP_CURSOR_INSTALL) {
-    console.log('[1focus] SKIP_CURSOR_INSTALL=1 set, skipping Cursor install step.')
+    console.log('[1Focus] SKIP_CURSOR_INSTALL=1 set, skipping Cursor install step.')
     return
   }
 
@@ -36,7 +36,7 @@ async function main() {
   for (const binary of candidates) {
     const ok = await tryInstall(binary, vsixPath)
     if (ok) {
-      console.log(`[1focus] Installed ${vsixName} via "${binary}".`)
+      console.log(`[1Focus] Installed ${vsixName} via "${binary}".`)
       return
     }
   }
@@ -56,6 +56,6 @@ function tryInstall(binary, vsixPath) {
 }
 
 main().catch((error) => {
-  console.error(`[1focus] Failed to install VSIX: ${error.message}`)
+  console.error(`[1Focus] Failed to install VSIX: ${error.message}`)
   process.exit(1)
 })

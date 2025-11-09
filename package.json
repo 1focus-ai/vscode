@@ -1,7 +1,7 @@
 {
   "publisher": "nikivdev",
   "name": "1focus",
-  "displayName": "1focus",
+  "displayName": "1Focus",
   "version": "0.2.0",
   "private": true,
   "packageManager": "pnpm@10.19.0",
@@ -37,8 +37,8 @@
     "commands": [
       {
         "command": "1focus.commitPush",
-        "title": "1focus: Commit & Push",
-        "category": "1focus"
+        "title": "1Focus: Commit & Push",
+        "category": "1Focus"
       }
     ],
     "configuration": {

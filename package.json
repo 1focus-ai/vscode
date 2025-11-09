@@ -2,7 +2,7 @@
   "publisher": "nikivdev",
   "name": "1focus",
   "displayName": "1Focus",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "description": "",

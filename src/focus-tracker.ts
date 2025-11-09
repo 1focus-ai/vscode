@@ -117,7 +117,7 @@ export async function getLastNonDotWindow(excludeSessionId: string, options?: { 
   }
 }
 
-function extractWorkspaceName(windowTitle: string) {
+export function extractWorkspaceName(windowTitle: string) {
   const emDash = ' \u2014 '
   if (windowTitle.includes(emDash)) {
     const segment = windowTitle.split(emDash).pop()

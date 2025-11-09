@@ -4,7 +4,8 @@ import { commands, env, window, workspace } from 'vscode'
 import type { OutputChannel } from 'vscode'
 import { displayName } from './generated/meta'
 import { focusCursorWindow, getFrontmostCursorWindowTitle, inferAppIdFromEnv, type SupportedAppId } from './macos'
-import { getLastNonDotWindow, recordFocusEvent, SqliteUnavailableError } from './focus-tracker'
+import { extractWorkspaceName, getLastNonDotWindow, recordFocusEvent, SqliteUnavailableError } from './focus-tracker'
+import { writeLastWindowMarker } from './last-window'
 
 const { activate, deactivate } = defineExtension(() => {
   const channel = window.createOutputChannel(displayName ?? '1Focus')
@@ -51,6 +52,16 @@ const { activate, deactivate } = defineExtension(() => {
       const workspaceLabel = workspacePath ? ` [${workspacePath}]` : ''
       const fileLabel = activeFile ? ` (${activeFile})` : ''
       channel.appendLine(`[1Focus] Focus recorded: ${title}${workspaceLabel}${fileLabel}`)
+      const windowLabel = (extractWorkspaceName(title) ?? title).trim()
+      if (windowLabel && !windowLabel.endsWith('.')) {
+        try {
+          await writeLastWindowMarker(windowLabel)
+        }
+        catch (markerError) {
+          const markerMessage = markerError instanceof Error ? markerError.message : String(markerError)
+          channel.appendLine(`[1Focus] Failed to update last window marker: ${markerMessage}`)
+        }
+      }
       return true
     }
     catch (error) {

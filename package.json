@@ -2,7 +2,7 @@
   "publisher": "nikivdev",
   "name": "1focus",
   "displayName": "1Focus",
-  "version": "0.2.0",
+  "version": "0.5.1",
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "description": "",
@@ -31,13 +31,32 @@
     "vscode": "^1.90.0"
   },
   "activationEvents": [
-    "onCommand:1focus.commitPush"
+    "onStartupFinished",
+    "onCommand:1focus.commitPush",
+    "onCommand:1focus.focusLastWindow",
+    "onCommand:1focus.logWindow",
+    "onCommand:1focus.logCurrentWindow"
   ],
   "contributes": {
     "commands": [
       {
         "command": "1focus.commitPush",
         "title": "1Focus: Commit & Push",
+        "category": "1Focus"
+      },
+      {
+        "command": "1focus.focusLastWindow",
+        "title": "1Focus: Focus Last Window",
+        "category": "1Focus"
+      },
+      {
+        "command": "1focus.logWindow",
+        "title": "1Focus: Log Window",
+        "category": "1Focus"
+      },
+      {
+        "command": "1focus.logCurrentWindow",
+        "title": "1Focus: Log Current Window",
         "category": "1Focus"
       }
     ],

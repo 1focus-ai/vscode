@@ -46,7 +46,8 @@ async function main() {
 
 function tryInstall(binary, vsixPath) {
   return new Promise(resolve => {
-    const child = spawn(binary, ['--install-extension', vsixPath], {
+    const args = ['--install-extension', vsixPath, '--force']
+    const child = spawn(binary, args, {
       stdio: 'inherit',
     })
 

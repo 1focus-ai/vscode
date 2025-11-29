@@ -2,7 +2,7 @@
   "publisher": "nikivdev",
   "name": "1focus",
   "displayName": "1Focus",
-  "version": "0.5.2",
+  "version": "0.5.5",
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "description": "",
@@ -35,13 +35,19 @@
     "onCommand:1focus.commitPush",
     "onCommand:1focus.focusLastWindow",
     "onCommand:1focus.logWindow",
-    "onCommand:1focus.logCurrentWindow"
+    "onCommand:1focus.logCurrentWindow",
+    "onCommand:1focus.flowTasks"
   ],
   "contributes": {
     "commands": [
       {
         "command": "1focus.commitPush",
         "title": "1Focus: Commit & Push",
+        "category": "1Focus"
+      },
+      {
+        "command": "1focus.flowTasks",
+        "title": "1Focus: Show Flow Tasks",
         "category": "1Focus"
       },
       {
@@ -58,6 +64,14 @@
         "command": "1focus.logCurrentWindow",
         "title": "1Focus: Log Current Window",
         "category": "1Focus"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "1focus.flowTasks",
+        "key": "ctrl+alt+;",
+        "mac": "cmd+alt+;",
+        "when": "editorTextFocus || editorFocus || terminalFocus"
       }
     ],
     "configuration": {
@@ -96,5 +110,36 @@
     "vitest": "catalog:test",
     "vscode-ext-gen": "catalog:vscode",
     "vsxpub": "catalog:cli"
+  },
+  "workspaces": {
+    "catalogs": {
+      "build": {
+        "tsdown": "^0.15.9"
+      },
+      "cli": {
+        "@vscode/vsce": "^3.6.2",
+        "bumpp": "^10.3.1",
+        "pncat": "^0.7.3",
+        "taze": "^19.8.1",
+        "vsxpub": "^0.1.2"
+      },
+      "lint": {
+        "@antfu/eslint-config": "^6.0.0",
+        "eslint": "^9.38.0"
+      },
+      "test": {
+        "vitest": "^3.2.4"
+      },
+      "tsc": {
+        "typescript": "^5.9.3"
+      },
+      "types": {
+        "@types/node": "^24.9.1"
+      },
+      "vscode": {
+        "reactive-vscode": "^0.4.0",
+        "vscode-ext-gen": "^1.3.0"
+      }
+    }
   }
 }

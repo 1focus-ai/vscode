@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import path from 'node:path'
 import { defineExtension } from 'reactive-vscode'
 import { commands, env, window, workspace } from 'vscode'
 import type { OutputChannel } from 'vscode'
@@ -6,6 +7,7 @@ import { displayName } from './generated/meta'
 import { focusCursorWindow, getFrontmostCursorWindowTitle, inferAppIdFromEnv, type SupportedAppId } from './macos'
 import { extractWorkspaceName, getLastNonDotWindow, recordFocusEvent, SqliteUnavailableError } from './focus-tracker'
 import { writeLastWindowMarker } from './last-window'
+import { loadFlowTasks } from './flow-tasks'
 
 const { activate, deactivate } = defineExtension(() => {
   const channel = window.createOutputChannel(displayName ?? '1Focus')
@@ -14,6 +16,8 @@ const { activate, deactivate } = defineExtension(() => {
   let lastLoggedSignature: string | null = null
   let lastLoggedAt = 0
   const hostAppId = inferAppIdFromEnv(env.appName)
+  const flowTaskTerminalName = 'Flow Tasks'
+  let flowTaskTerminal: ReturnType<typeof window.createTerminal> | null = null
 
   const logWindowFocus = async (options?: { force?: boolean }) => {
     if (process.platform !== 'darwin') {
@@ -144,6 +148,53 @@ const { activate, deactivate } = defineExtension(() => {
       void logWindowFocus()
   })
 
+  const showFlowTasks = commands.registerCommand('1focus.flowTasks', async () => {
+    const workspacePath = getTargetWorkspacePath()
+    if (!workspacePath) {
+      window.showErrorMessage('1Focus: open a workspace to list flow tasks.')
+      return
+    }
+
+    try {
+      const { tasks, flowRoot } = await loadFlowTasks(workspacePath)
+      if (!tasks.length) {
+        window.showInformationMessage('1Focus: no tasks found in flow.toml.')
+        return
+      }
+
+      const picks = tasks.map(task => ({
+        label: task.name,
+        description: task.command,
+        detail: task.description,
+        task,
+      }))
+
+      const choice = await window.showQuickPick(picks, {
+        placeHolder: `Run flow task (${path.basename(flowRoot)})`,
+        matchOnDescription: true,
+        matchOnDetail: true,
+      })
+      if (!choice)
+        return
+
+      const terminal = getFlowTerminal()
+      const escapedCwd = flowRoot.replace(/"/g, '\\"')
+      terminal.show(true)
+      terminal.sendText(`cd "${escapedCwd}"`)
+      terminal.sendText(choice.task.command, true)
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      window.showErrorMessage(`1Focus: ${message}`)
+    }
+  })
+
+  function getFlowTerminal() {
+    if (!flowTaskTerminal || flowTaskTerminal.exitStatus)
+      flowTaskTerminal = window.createTerminal({ name: flowTaskTerminalName })
+    return flowTaskTerminal
+  }
+
   const logWindowCommand = commands.registerCommand('1focus.logWindow', async () => {
     channel.appendLine('[1Focus] logWindow command invoked')
     const recorded = await logWindowFocus({ force: true })
@@ -167,6 +218,7 @@ const { activate, deactivate } = defineExtension(() => {
     logWindowCommand,
     logCurrentWindowCommand,
     focusWatcher,
+    showFlowTasks,
   ]
 })
 

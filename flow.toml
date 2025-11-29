@@ -1,0 +1,280 @@
+version = 1
+
+[deps]
+bun = "bun"
+pnpm = "pnpm"
+node = "node"
+go = "go"
+f = "f"
+fast = "fast"
+
+[[tasks]]
+name = "default"
+command = "f tasks"
+description = "List available flow tasks (replacement for task --list)."
+dependencies = ["f"]
+shortcuts = ["ls"]
+
+[[tasks]]
+name = "setup"
+command = '''
+set -euo pipefail
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node.js not found in PATH. Install it from https://nodejs.org (LTS 18+ recommended)."
+  exit 1
+fi
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pnpm not found in PATH. Enable it via corepack enable pnpm or install from https://pnpm.io/installation."
+  exit 1
+fi
+
+if ! command -v f >/dev/null 2>&1; then
+  echo "Required CLI 'f' not found in PATH. Install it from https://github.com/1focus-ai/f."
+  exit 1
+fi
+
+echo "Installing JS dependencies with pnpm..."
+bunx pnpm install
+
+echo "Building the extension once to verify the toolchain..."
+bunx pnpm build
+
+echo "✔️ you are setup"
+'''
+description = "Verify Node/pnpm/f and bootstrap the repo."
+dependencies = ["bun", "pnpm", "node", "f"]
+shortcuts = ["s"]
+
+[[tasks]]
+name = "flow"
+command = '''
+set -euo pipefail
+repo_root="$PWD"
+tmp_root="${TMPDIR:-/tmp}"
+tmp_dir="$(mktemp -d "$tmp_root/fgo-task-XXXXXX")"
+trap 'rm -rf "$tmp_dir"' EXIT
+
+if [ ! -d cli/flow ]; then
+  echo "cli/flow directory not found. Add the CLI sources or adjust this task."
+  exit 1
+fi
+
+pushd cli/flow >/dev/null
+export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
+export GOMODCACHE="${GOMODCACHE:-$repo_root/.gomodcache}"
+mkdir -p "$GOCACHE"
+mkdir -p "$GOMODCACHE"
+go build -o "$tmp_dir/fgo" .
+popd >/dev/null
+
+"$tmp_dir/fgo" ${FLOW_ARGS:-}
+'''
+description = "Build the Go CLI and run it (args via FLOW_ARGS env)."
+dependencies = ["go"]
+shortcuts = ["f"]
+
+[[tasks]]
+name = "dev"
+command = "f flow"
+description = "Alias for flow (passes through to the Go CLI task)."
+dependencies = ["go"]
+shortcuts = ["d"]
+
+[[tasks]]
+name = "run"
+command = "f flow"
+description = "Alias for flow (passes through to the Go CLI task)."
+dependencies = ["go"]
+shortcuts = ["r"]
+
+[[tasks]]
+name = "deploy"
+command = '''
+set -euo pipefail
+
+new_version=$(node - <<'EOF'
+const fs = require('fs')
+const path = 'package.json'
+const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
+const parts = (pkg.version || '0.0.0').split('.').map(n => parseInt(n, 10) || 0)
+while (parts.length < 3) parts.push(0)
+parts[2] += 1
+pkg.version = parts.join('.')
+fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n')
+console.log(pkg.version)
+EOF
+)
+echo "Bumped package.json version to ${new_version}"
+
+bunx pnpm package
+'''
+description = "Auto-bump version, package the VS Code extension, and install it into Cursor."
+dependencies = ["bun", "pnpm"]
+
+[[tasks]]
+name = "deploy_cli"
+command = '''
+set -euo pipefail
+repo_root="$PWD"
+install_dir="$HOME/bin"
+command_name="fgo"
+alias_name="fe"
+mkdir -p "$install_dir"
+
+if [ ! -d cli/flow ]; then
+  echo "cli/flow directory not found. Add the CLI sources or adjust this task."
+  exit 1
+fi
+
+pushd cli/flow >/dev/null
+export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
+export GOMODCACHE="${GOMODCACHE:-$repo_root/.gomodcache}"
+mkdir -p "$GOCACHE"
+mkdir -p "$GOMODCACHE"
+tmp_root="${TMPDIR:-/tmp}"
+tmp_dir="$(mktemp -d "$tmp_root/fgo-install-XXXXXX")"
+trap 'rm -rf "$tmp_dir"' EXIT
+go build -o "$tmp_dir/$command_name" .
+popd >/dev/null
+install_path="$install_dir/$command_name"
+mv "$tmp_dir/$command_name" "$install_path"
+chmod 755 "$install_path"
+rm -rf "$tmp_dir"
+echo "Installed CLI to $install_path"
+if [ -n "$alias_name" ]; then
+  ln -sf "$install_path" "$install_dir/$alias_name"
+  if [ "$alias_name" = "$command_name" ]; then
+    echo "Ensured $install_dir/$alias_name points to $install_path"
+  else
+    echo "Created symlink $install_dir/$alias_name -> $install_path"
+  fi
+fi
+
+help_snapshot="$("$install_path" --help 2>&1 || true)"
+notes=$(printf 'Running `%s` without any arguments opens an embedded fzf palette so you can fuzzy-search commands and read their descriptions before executing them.\n\nFor `%s commit`, export `OPENAI_API_KEY` in your shell profile (e.g. fish config) so the CLI can talk to OpenAI. This environment variable is the only requirement, so the command works in local shells and CI alike.\n\nFor `%s youtubeToSound`, the CLI automatically passes `--cookies-from-browser` using Safari cookies. Override this by setting `FLOW_YOUTUBE_COOKIES_BROWSER` (e.g. `firefox`), set it to `none` to skip cookies entirely, or pass your own `--cookies*` flags after the URL—they are forwarded directly to `yt-dlp`.\n\nIf you run `%s youtubeToSound` without arguments, the command grabs the frontmost Safari tab URL automatically.' \
+  "$command_name" "$command_name" "$command_name" "$command_name")
+alias_note=""
+if [ -n "$alias_name" ]; then
+  alias_note=$(printf 'A shorthand `%s` alias is installed alongside `%s`; update or remove the symlink at ~/bin/%s if you prefer a different name.' \
+    "$alias_name" "$command_name" "$alias_name")
+  notes=$(printf '%s\n\n%s' "$notes" "$alias_note")
+fi
+
+{
+  echo "# $command_name"
+  echo
+  printf '```\n%s --help\n' "$command_name"
+  printf '%s\n' "$help_snapshot"
+  printf '```\n\n'
+  echo '## Notes'
+  echo
+  printf '%s\n' "$notes"
+} > "$repo_root/cli/flow/readme.md"
+
+case ":${PATH:-}:" in
+  *:"$install_dir":*)
+    echo "$install_dir already present in PATH"
+    exit 0
+    ;;
+esac
+
+shell_name="$(basename "${SHELL:-}")"
+marker="# >>> ${command_name} initialize >>>"
+end_marker="# <<< ${command_name} initialize <<<"
+target=""
+snippet=""
+
+case "$shell_name" in
+  fish)
+    target="$HOME/.config/fish/conf.d/${command_name}.fish"
+    snippet='fish_add_path $HOME/bin'
+    ;;
+  zsh)
+    target="$HOME/.zshrc"
+    snippet='export PATH="$HOME/bin:$PATH"'
+    ;;
+  bash)
+    target="$HOME/.bashrc"
+    snippet='export PATH="$HOME/bin:$PATH"'
+    ;;
+  *)
+    echo "$install_dir is not on PATH. Add it to your shell configuration manually."
+    exit 0
+    ;;
+esac
+
+if [ -n "$target" ] && [ -f "$target" ] && grep -F "$marker" "$target" >/dev/null 2>&1; then
+  echo "$install_dir already configured via $target"
+  exit 0
+fi
+
+printf 'Add %s to PATH in %s? [y/N]: ' "$install_dir" "${target:-manual}"
+read -r reply || reply=""
+case "$reply" in
+  [yY]*)
+    mkdir -p "$(dirname "$target")"
+    if [ "$shell_name" = "fish" ]; then
+      {
+        echo "$marker"
+        echo "$snippet"
+        echo "$end_marker"
+      } > "$target"
+    else
+      {
+        printf '\n%s\n' "$marker"
+        printf '%s\n' "$snippet"
+        printf '%s\n' "$end_marker"
+      } >> "$target"
+    fi
+    echo "Updated $target. Restart your shell or source the file to use $command_name."
+    ;;
+  *)
+    echo "Skipped PATH update. Add $install_dir to PATH manually if needed."
+    ;;
+esac
+'''
+description = "Build and install the Go CLI to ~/bin as fgo (alias fe)."
+dependencies = ["go"]
+
+[[tasks]]
+name = "deploy_moonbit"
+command = '''
+set -euo pipefail
+repo_root="$PWD"
+install_dir="$HOME/bin"
+command_name="fm"
+alias_name=""
+mkdir -p "$install_dir"
+
+if [ ! -d cli/flow ]; then
+  echo "cli/flow directory not found. Add the CLI sources or adjust this task."
+  exit 1
+fi
+
+pushd cli/flow >/dev/null
+export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
+export GOMODCACHE="${GOMODCACHE:-$repo_root/.gomodcache}"
+mkdir -p "$GOCACHE"
+mkdir -p "$GOMODCACHE"
+tmp_root="${TMPDIR:-/tmp}"
+tmp_dir="$(mktemp -d "$tmp_root/fgo-install-XXXXXX")"
+trap 'rm -rf "$tmp_dir"' EXIT
+go build -o "$tmp_dir/$command_name" .
+popd >/dev/null
+install_path="$install_dir/$command_name"
+mv "$tmp_dir/$command_name" "$install_path"
+chmod 755 "$install_path"
+rm -rf "$tmp_dir"
+echo "Installed CLI to $install_path"
+'''
+description = "Build the fm CLI binary and install it to ~/bin (no alias)."
+dependencies = ["go"]
+
+[[tasks]]
+name = "commit"
+command = "fast commitPush"
+description = "Commit with AI"
+dependencies = ["fast"]
+delegate_to_hub = true
